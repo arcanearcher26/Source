@@ -1,0 +1,30 @@
+{
+  "project": "Source Code Game",
+  "focus": "Ninja School Online / Ninja School Offline",
+  "created": "2026-08-21",
+  "references": [
+    {
+      "file": "NinjaSchoolOffline_2.1.7_v1.25.27.jar",
+      "role": "current_offline_modified_client",
+      "sha256": "90fd7ca412f2a448aa8af3d4fae3c90152874f45bfecdca296ed34b7358f0dc9"
+    },
+    {
+      "file": "Ninja_Server_Termux-offline_217.zip",
+      "role": "offline_server_termux_reference",
+      "sha256": "85bfdec00f9e50cb89d13dd170e41b5352328bb2c57d93814f79c314b1e6677c"
+    },
+    {
+      "file": "suite-NinjaSchoolOffline.rar",
+      "role": "offline_suite_emulator_rms_reference",
+      "sha256": "6feb78551065066168d8847f119b689cd37aeaddea600b034113a06d371a0e5f"
+    }
+  ],
+  "hard_rules": [
+    "Keep original online source, modded JARs, current offline JAR, server package and emulator/RMS data conceptually separate.",
+    "Diff new offline versions before updating.",
+    "Preserve and reapply old modifications.",
+    "Report conflicts instead of silently overwriting.",
+    "Use evidence before renaming obfuscated symbols.",
+    "Treat Tàn Sát, Delete Item, item filtering and other mod functions as important reference behavior."
+  ]
+}

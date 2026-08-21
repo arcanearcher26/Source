@@ -1,0 +1,30 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Java/Gradle build outputs
+.gradle/
+build/
+out/
+target/
+*.class
+
+# Runtime/generated data
+logs/
+log/
+cache/
+tmp/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local secrets/config
+.env
+.env.*
+local.properties
+
+# Generated decompiler output (keep intentional source under source/)
+decompiled/
