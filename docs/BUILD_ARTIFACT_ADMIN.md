@@ -1,38 +1,42 @@
 # Build artifact — Admin menu (25.47)
 
-Baseline: `NinjaSchoolOffline_v1.25.47.jar` supplied for the current test cycle.
+Baseline: `NinjaSchoolOffline_v1.25.47.jar`.
+
+## v4 runtime fix
+
+The previous v3 bridge placed direct references to the item/inventory implementation in the same class that is loaded merely to open the Admin menu. On AngelChip/J2ME this caused the game to hang while opening Admin.
+
+v4 separates the runtime implementation:
+
+- `AdminBridge.show()` contains only the lightweight Admin-menu UI construction.
+- `AdminBridge.addItem()` and `AdminBridge.clearInventory()` lazily delegate to `AdminAction`, so the heavy game/item references are not part of the menu-opening path.
+- `AdminAction.addItem()` invokes the native item-input command `30014`.
+- `AdminAction.clearInventory()` resets every real inventory slot and then uses the normal save path.
 
 ## Native item flow
 
 The offline JAR already contains the intended Admin/NPC item-receive pipeline in `k1f`:
 
-1. The UI opens input command `30014` with the native prompt `ID item [SL] [nâng cấp] [hệ] [khóa] [hạn ngày]`.
-2. The response handler validates the Item ID against the JAR item DB (`k17.H(id)`).
-3. Quantity defaults to 1, upgrade defaults to 0, system defaults to 0, lock defaults to false, expiry defaults to permanent.
-4. The handler then opens command `30015` with `Option id:param, id:param (trống = theo DB)`.
-5. The option handler accepts up to 20 entries, validates each option ID through the JAR option DB (`k17.I(id)`), and creates the item through the native item factory.
+1. Native input command `30014` uses `ID item [SL] [nâng cấp] [hệ] [khóa] [hạn ngày]`.
+2. The response handler validates the Item ID against the JAR item DB.
+3. The native option step `30015` accepts `id:param,id:param` and an empty value means the item's DB/default options.
+4. The native item factory creates the item and puts it into inventory.
 
-The MOD Admin `Thêm Item` therefore calls the same native command `30014`; it does not use MenuAuto/Auto Nhặt and does not implement a parallel item serializer.
+The MOD therefore reuses the game's existing pipeline rather than MenuAuto/Auto Nhặt or a parallel serializer.
 
 ## Inventory wipe
 
-`Xóa Hành Trang` obtains the current player with `KhanhNguyen9872.E()`, loops over the real inventory array `player.f`, and calls the game's native slot reset `KhanhNguyen9872.b(player, slot)` for every slot. That reset clears item ID, quantity/upgrade-related state, lock state, expiry and option arrays. The normal save path is then invoked.
+`AdminAction.clearInventory()` gets the current player, loops through the actual inventory array, calls the native slot reset routine for every slot, then calls the normal save functions. This is intended to remove normal, locked and upgraded items rather than opening the player-information screen.
 
-## External Item-ID cross-check
+## Verification
 
-Public catalogs independently list ID `325` as **Huyền Thiết Tuyến**. One current catalog exposes 1,255 items and supports lookup by ID/name; older community catalogs also agree on the 325 mapping. External catalogs are only cross-check references: the JAR's own DB remains authoritative at runtime. citeturn1search0turn1search2
-
-## Current artifact
-
-`NinjaSchoolOffline_v1.25.47_Admin_v3.jar`
-
-- SHA-256: `65ca94122905f54c32e47cbc8e3e724a11553257e97bb5253ce20ec86925326c`
-- JAR archive test: PASS.
+- JAR archive test: PASS (`unzip -t`).
 - Manifest/MIDlet preserved from 25.47.
-- Patched class-file major version: 47.
-- `AdminBridge` has no reflection.
-- The native prompt text was aligned with the exact 25.47 NPC/Admin item prompt rather than the shortened earlier `ID Item` label.
+- Added classes are Java class-file major version 47.
+- `AdminBridge.show()` has no direct item/inventory implementation references.
+- `AdminAction` contains the native item and inventory operations.
+- Final v4 artifact SHA-256: `c4cbabbdef93c9c363aa457aeb70c77acc249e107df21cf424011f8cbc1e9a80`.
 
 ## Device verification
 
-The JAR is structurally and bytecode validated here. AngelChip must be used for the final UI interaction test because this environment does not contain the AngelChip/J2ME runtime.
+The structural/bytecode checks pass here. AngelChip remains the required final runtime test.
