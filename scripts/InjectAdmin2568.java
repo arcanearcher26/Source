@@ -39,7 +39,9 @@ public final class InjectAdmin2568 {
 
     public static byte[] patchBa(byte[] original) {
         ClassReader reader = new ClassReader(original);
-        ClassWriter writer = new ClassWriter(reader, 0);
+        ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS) {
+            @Override protected String getCommonSuperClass(String a, String b) { return "java/lang/Object"; }
+        };
         ClassVisitor visitor = new ClassVisitor(Opcodes.ASM9, writer) {
             @Override public MethodVisitor visitMethod(int access, String name,
                     String descriptor, String signature, String[] exceptions) {
@@ -68,7 +70,9 @@ public final class InjectAdmin2568 {
 
     public static byte[] patchMenu(byte[] original) {
         ClassReader reader = new ClassReader(original);
-        ClassWriter writer = new ClassWriter(reader, 0);
+        ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS) {
+            @Override protected String getCommonSuperClass(String a, String b) { return "java/lang/Object"; }
+        };
         ClassVisitor visitor = new ClassVisitor(Opcodes.ASM9, writer) {
             @Override public MethodVisitor visitMethod(int access, String name,
                     String descriptor, String signature, String[] exceptions) {
