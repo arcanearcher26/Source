@@ -6,6 +6,8 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import java.util.zip.CRC32;
+import java.util.zip.ZipEntry;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -18,6 +20,22 @@ import org.objectweb.asm.Opcodes;
 public final class InjectAdmin2568 {
     private static final String BA = "ba.class";
     private InjectAdmin2568() {}
+
+    private static void put(JarOutputStream out, JarEntry old, byte[] data) throws IOException {
+        JarEntry next = new JarEntry(old.getName());
+        next.setTime(old.getTime());
+        next.setComment(old.getComment());
+        if (old.getExtra() != null) next.setExtra(old.getExtra());
+        int method = old.getMethod();
+        if (method == ZipEntry.STORED) {
+            CRC32 crc = new CRC32(); crc.update(data);
+            next.setMethod(ZipEntry.STORED); next.setSize(data.length); next.setCompressedSize(data.length);
+            next.setCrc(crc.getValue());
+        } else if (method == ZipEntry.DEFLATED) {
+            next.setMethod(ZipEntry.DEFLATED);
+        }
+        out.putNextEntry(next); out.write(data); out.closeEntry();
+    }
 
     public static byte[] patchBa(byte[] original) {
         ClassReader reader = new ClassReader(original);
@@ -144,21 +162,16 @@ public final class InjectAdmin2568 {
         Path output = Path.of(args[1]);
         Path bridge = Path.of(args[2]);
         try (JarFile jar = new JarFile(input.toFile())) {
-            Manifest manifest = jar.getManifest();
-            try (JarOutputStream out = manifest == null
-                    ? new JarOutputStream(Files.newOutputStream(output))
-                    : new JarOutputStream(Files.newOutputStream(output), manifest)) {
+            try (JarOutputStream out = new JarOutputStream(Files.newOutputStream(output))) {
+                JarEntry manifestEntry = jar.getJarEntry("META-INF/MANIFEST.MF");
+                if (manifestEntry != null) put(out, manifestEntry, jar.getInputStream(manifestEntry).readAllBytes());
                 var entries = jar.entries();
                 while (entries.hasMoreElements()) {
                     JarEntry old = entries.nextElement();
                     if (old.getName().equals("META-INF/MANIFEST.MF")) continue;
-                    JarEntry next = new JarEntry(old.getName());
-                    next.setTime(old.getTime());
-                    out.putNextEntry(next);
                     byte[] data = jar.getInputStream(old).readAllBytes();
                     if (old.getName().equals(BA)) data = patchMenu(patchBa(data));
-                    out.write(data);
-                    out.closeEntry();
+                    put(out, old, data);
                 }
                 JarEntry bridgeEntry = new JarEntry("AdminBridge.class");
                 out.putNextEntry(bridgeEntry);

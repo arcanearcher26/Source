@@ -4,6 +4,11 @@ Baseline: `NinjaSchoolOffline_v1.25.68.jar`
 
 Status: **TESTING / PARTIAL**
 
+Packaging revision: the rebuilt archive preserves the original JAR entry
+compression modes (including stored resources) and the original manifest
+bytes. This addresses AngelChip cases where the file can be selected but
+silently does not start.
+
 This candidate contains:
 
 - an `Admin` entry added to the F1 menu;
